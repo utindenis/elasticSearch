@@ -1,0 +1,11 @@
+{
+  "autoload": {
+    "psr-4": {
+      "Elastic\\":"src/"
+    }
+  },
+
+  "require": {
+    "elasticsearch/elasticsearch": "~6.0"
+  }
+}
