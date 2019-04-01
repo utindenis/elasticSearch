@@ -1,21 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script type="text/javascript" src="src/js/main.js"></script>
 </head>
 <body>
 <meta charset="UTF-8">
 <h1>Elastic Search</h1>
 <form method="post">
     <h3>Search:</h3>
-    <p>Search in some document lines: <input type="text" name="searchAll"/></p>
+    <p>Search in some document lines: <input type="text" name="searchAll" value="<?if(!empty($_POST["searchAll"])):?><?=$_POST["searchAll"]?><?endif;?>"/></p>
     <h3>Cost:</h3>
-    <p>From: <input type="text" name="from"/></p>
-    <p>To: <input type="text" name="to"/></p>
+    <p>From: <input type="text" name="from" value="<?if(!empty($_POST["from"])):?><?=$_POST["from"]?><?endif;?>"/></p>
+    <p>To: <input type="text" name="to" value="<?if(!empty($_POST["to"])):?><?=$_POST["to"]?><?endif;?>"/></p>
     <h3>Search by fields:</h3>
-    <p>Type bulding: <input type="text" name="typeBulding"/></p>
-    <p>Rooms: <input type="number" name="rooms"/></p>
-    <p>Accomodation format: <input type="text" name="accomodationFormat"/></p>
+    <p>Type bulding: <input type="text" name="typeBulding" value="<?if(!empty($_POST["typeBulding"])):?><?=$_POST["typeBulding"]?><?endif;?>"/></p>
+    <p>Rooms: <input type="number" name="rooms" value="<?if(!empty($_POST["rooms"])):?><?=$_POST["rooms"]?><?endif;?>"/></p>
+    <p>Accomodation format: <input type="text" name="accomodationFormat" value="<?if(!empty($_POST["accomodationFormat"])):?><?=$_POST["accomodationFormat"]?><?endif;?>"/></p>
     <p><input type="submit" value="Search"/></p>
+    <p><input type='reset' value='Reset' name='reset' onclick="return resetForm(this.form);"></p>
 </form>
 </body>
 </html>
@@ -63,3 +65,5 @@ try {
 } catch (Throwable $e) {
     var_dump($e);
 }
+
+?>

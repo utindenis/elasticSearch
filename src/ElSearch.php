@@ -19,7 +19,7 @@ class ElSearch
     }
 
     /**
-     * Search by fields
+     * Search all type
      */
     public function searchMain($searchStruct, $searchAll, $from, $to)
     {
@@ -30,21 +30,21 @@ class ElSearch
             ];
         }
 
-        $paramsExample = [
+        $paramsFullExample = [
             'index' => 'logs',
             'type' => 'test',
             'body' => [
                 'query' => [
                     'bool' => [
                         'must' => [
-                            ['multi_match' => [
-                                'query' => $searchAll,
-                                'fields' => ['name', 'description'],
-                                'type' => 'phrase']
-                            ],
-                            $matches
-                        ],
-                        'filter' => [
+                            [
+                                'multi_match' => [
+                                    'query' => $searchAll,
+                                    'operator' => 'and',
+                                    'fields' => ['name', 'description'],
+                                    'type' => 'cross_fields'],
+
+                            ], $matches,
                             [
                                 'range' => [
                                     'cost' => [
@@ -74,10 +74,11 @@ class ElSearch
             $params['body']['query']['bool']['must'] = [
                 ['multi_match' => [
                     'query' => $searchAll,
+                    'operator' => 'and',
                     'fields' => ['name', 'description'],
-                    'type' => 'phrase']
+                    'type' => 'cross_fields']
                 ],
-                $matches
+                $matches,
             ];
         }
         if (!empty($searchAll) && empty($matches)) {
@@ -93,6 +94,7 @@ class ElSearch
                 $matches
             ];
         }
+
         if (!empty($from) || !empty($to)) {
             $arCost = [];
             if (!empty($from))
@@ -100,14 +102,21 @@ class ElSearch
             if (!empty($to))
                 $arCost['lte'] = $to;
             if (!empty($arCost)) {
-                $params['body']['query']['bool']['filter'] = [
-                    [
-                        'range' => [
-                            'cost' => $arCost
-                        ]]
+                $paramsCost = [
+                    'range' => [
+                        'cost' => $arCost
+                    ]
                 ];
             }
+            $params['body']['query']['bool']['must'][] =
+                $paramsCost;
         }
+
+//        ini_set("xdebug.var_display_max_children", -1);
+//        ini_set("xdebug.var_display_max_data", -1);
+//        ini_set("xdebug.var_display_max_depth", -1);
+//        echo '<pre>', var_dump($params), '</pre>';
+//        echo '<pre>', var_dump($paramsFullExample), '</pre>';
         return $this->client->search($params);
     }
 
@@ -122,7 +131,6 @@ class ElSearch
         ];
         return $this->client->search($params);
     }
-
 
     /**
      * Search by fields
@@ -210,7 +218,95 @@ class ElSearch
             'type' => 'test',
             'body' => $matches
         ];
+        echo '<pre>', var_dump($params), '</pre>';
         return $this->client->index($params);
+    }
+
+    /**
+     * Create mapping with nGram
+     */
+    public function createMapping()
+    {
+        $params = [
+            'index' => 'logs',
+            'body' => [
+                'settings' => [
+                    'analysis' => [
+                        'analyzer' => [
+                            'autocomplete' => [
+                                'tokenizer' => 'autocomplete',
+                                'filter' => [
+                                    'lowercase'
+                                ]
+                            ],
+                            'autocomplete_search' => [
+                                'tokenizer' => 'lowercase'
+                            ]
+                        ],
+                        'tokenizer' => [
+                            'autocomplete' => [
+                                'type' => 'edge_ngram',
+                                'min_gram' => '2',
+                                'max_gram' => '10',
+                                'token_chars' => [
+                                    'letter'
+                                ]
+                            ]
+                        ]
+                    ]
+                ],
+                'mappings' => [
+                    'test' => [
+                        'properties' => [
+                            'id' => [
+                                'type' => 'text'
+                            ],
+                            'transactionType' => [
+                                'type' => 'text'
+                            ],
+                            'typeBulding' => [
+                                'type' => 'text'
+                            ],
+                            'cost' => [
+                                'type' => 'long'
+                            ],
+                            'square' => [
+                                'type' => 'long'
+                            ],
+                            'rooms' => [
+                                'type' => 'integer'
+                            ],
+                            'finish' => [
+                                'type' => 'text'
+                            ],
+                            'trim' => [
+                                'type' => 'text'
+                            ],
+                            'fund' => [
+                                'type' => 'text'
+                            ],
+                            'accomodationFormat' => [
+                                'type' => 'text'
+                            ],
+                            'mandatoryConditions' => [
+                                'type' => 'text'
+                            ],
+                            'name' => [
+                                'type' => 'text',
+                                'analyzer' => 'autocomplete',
+                                'search_analyzer' => 'autocomplete_search'
+                            ],
+                            'description' => [
+                                'type' => 'text',
+                                'analyzer' => 'autocomplete',
+                                'search_analyzer' => 'autocomplete_search'
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ];
+        return $this->client->indices()->create($params);
     }
 
     /**
@@ -219,13 +315,11 @@ class ElSearch
     public function deleteByIndex(array $delIndex)
     {
         $deleteParams = [
-            'index' => $delIndex
+            'index' => $delIndex,
+//            'type' => 'data'
         ];
-        try {
-            $this->client->indices()->delete($deleteParams);
-        } catch (\Throwable $e) {
-            print_r('Index is incorrect');
-        }
+        return $this->client->indices()->delete($deleteParams);
+
     }
 
     /**
