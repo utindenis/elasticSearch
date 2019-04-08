@@ -24,10 +24,12 @@ class ElSearch
     public function searchMain($searchStruct, $searchAll, $from, $to)
     {
         $matches = [];
-        foreach ($searchStruct as $field => $item) {
-            $matches[] = [
-                'match' => [$field => $item]
-            ];
+        if (!empty($searchStruct)) {
+            foreach ($searchStruct as $field => $item) {
+                $matches[] = [
+                    'match' => [$field => $item]
+                ];
+            }
         }
 
         $paramsFullExample = [
@@ -85,8 +87,9 @@ class ElSearch
             $params['body']['query']['bool']['must'] = [
                 ['multi_match' => [
                     'query' => $searchAll,
+                    'operator' => 'and',
                     'fields' => ['name', 'description'],
-                    'type' => 'phrase']
+                    'type' => 'cross_fields']
                 ]
             ];
         } elseif (empty($searchAll) && !empty($matches)) {
@@ -127,9 +130,30 @@ class ElSearch
     {
         $params = [
             'index' => 'logs',
-            'type' => 'test',
+            'type' => 'test'
         ];
-        return $this->client->search($params);
+        try {
+            return $this->client->search($params);
+        } catch (\Exception $ex) {
+            return false;
+        }
+    }
+    /**
+     * Get all documents
+     */
+    public function getDocumentById($idDocument)
+    {
+
+        $params = [
+            'index' => 'logs',
+            'type' => 'test',
+            'id' => $idDocument
+        ];
+        try {
+            $this->client->get($params);
+        } catch (\Exception $exception) {
+             return false;
+        }
     }
 
     /**
@@ -218,7 +242,7 @@ class ElSearch
             'type' => 'test',
             'body' => $matches
         ];
-        echo '<pre>', var_dump($params), '</pre>';
+//        echo '<pre>', var_dump($params), '</pre>';
         return $this->client->index($params);
     }
 
@@ -319,6 +343,20 @@ class ElSearch
 //            'type' => 'data'
         ];
         return $this->client->indices()->delete($deleteParams);
+
+    }
+
+    /**
+     * Delete by index
+     */
+    public function deleteById($idDocument)
+    {
+        $deleteParams = [
+            'index' => 'logs',
+            'type' => 'test',
+            'id' => $idDocument
+        ];
+        return $this->client->delete($deleteParams);
 
     }
 

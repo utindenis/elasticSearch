@@ -1,11 +1,13 @@
 {
   "autoload": {
     "psr-4": {
-      "Elastic\\":"src/"
+      "Elastic\\":"src/",
+      "UniTest\\":"phpUnitTutorial/Test"
     }
   },
 
   "require": {
-    "elasticsearch/elasticsearch": "~6.0"
+    "elasticsearch/elasticsearch": "~6.0",
+    "phpunit/phpunit": "^7"
   }
 }
